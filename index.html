@@ -600,9 +600,17 @@ function colorFor(kind){
   if(kind === "signature") return "#e07070";
   return "#7fd3e8";
 }
+function gmapsQuery(s){
+  // Prefer a real place name so Google Maps (esp. the mobile app) shows a proper
+  // label instead of "Dropped pin" — fall back to raw coordinates if no name.
+  if(s.name){
+    const parts = [s.name, s.region].filter(Boolean).join(", ");
+    return encodeURIComponent(parts);
+  }
+  return `${s.lat},${s.lng}`;
+}
 function gmapsUrl(s){
-  const q = s.lat && s.lng ? `${s.lat},${s.lng}` : encodeURIComponent(s.name);
-  return `https://www.google.com/maps/search/?api=1&query=${q}`;
+  return `https://www.google.com/maps/search/?api=1&query=${gmapsQuery(s)}`;
 }
 
 /* ---------- OSRM road routing (with straight-line fallback) ---------- */
@@ -875,7 +883,7 @@ function renderList(day){
 
     if(showDirections && i < day.stops.length - 1){
       const next = day.stops[i+1];
-      const url = `https://www.google.com/maps/dir/?api=1&origin=${s.lat},${s.lng}&destination=${next.lat},${next.lng}`;
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${gmapsQuery(s)}&destination=${gmapsQuery(next)}`;
       const conn = document.createElement("div");
       conn.className = "leg-connector";
       conn.innerHTML = `
