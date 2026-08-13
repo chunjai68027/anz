@@ -191,6 +191,21 @@
   .hint{font-size:11.5px;color:var(--text-faint);}
   .field-error{color:var(--red);font-size:11.5px;margin-top:4px;display:none;}
 
+  .notes-box{
+    width:100%;min-height:110px;background:var(--panel);border:1px solid var(--line);color:var(--text);
+    padding:14px 16px;border-radius:var(--radius);font-size:13.5px;line-height:1.6;resize:vertical;
+  }
+  .notes-box:focus{outline:none;border-color:var(--ice-dim);}
+  .notes-box::placeholder{color:var(--text-faint);}
+  .notes-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+  .notes-links a{
+    font-family:var(--font-mono);font-size:11.5px;color:var(--ice);text-decoration:none;
+    border:1px solid var(--ice-dim);background:rgba(127,211,232,.08);padding:6px 12px;border-radius:20px;
+    display:inline-flex;align-items:center;gap:6px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .notes-links a:hover{background:rgba(127,211,232,.16);}
+  .notes-saved{font-family:var(--font-mono);font-size:10.5px;color:var(--text-faint);margin-top:8px;height:14px;}
+
   .foot-note{margin-top:32px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--text-faint);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
 
   .leaflet-popup-content-wrapper{background:var(--panel);color:var(--text);border-radius:8px;}
@@ -386,6 +401,16 @@
     </div>
   </section>
 
+  <section class="section">
+    <div class="section-head">
+      <h2>Notes</h2>
+      <span class="meta">tickets, bookings, links</span>
+    </div>
+    <textarea class="notes-box" id="notesBox" placeholder="e.g. Milford Sound cruise ticket: https://... / Booking ref: ABCD1234 / Pack raincoat, tunnel can be delayed by weather"></textarea>
+    <div class="notes-links" id="notesLinks"></div>
+    <div class="notes-saved" id="notesSaved"></div>
+  </section>
+
   <div class="foot-note">
     <span>Road routes via OSRM (open source routing) — falls back to straight-line estimates if the routing service is unreachable.</span>
     <span>Saved automatically in this browser · use Export to back up or move devices</span>
@@ -443,11 +468,53 @@ const DEFAULT_DAYS = [
   }
 ];
 
+const EXTRA_DAYS = [
+  {
+    id: "d2",
+    date: "2026-11-19",
+    title: "Milford Sound Day Trip",
+    subtitle: "Queenstown → Te Anau → Milford Sound loop",
+    notes: "",
+    stops: [
+      {name:"Queenstown", region:"Otago, New Zealand", lat:-45.0312, lng:168.6626, kind:"anchor", duration:null, tags:["Start of day"]},
+      {name:"Lake Wakatipu", region:"Otago, New Zealand", lat:-45.1500, lng:168.6600, kind:"way", duration:null, tags:["Sightseeing","Bus tour","Pass by","Scenic drive","Scenic views on the way"]},
+      {name:"Devils Staircase", region:"Otago, New Zealand", lat:-45.2373, lng:168.6721, kind:"way", duration:null, tags:["Sightseeing","Bus tour","Pass by","Scenic drive","Scenic views on the way"]},
+      {name:"Te Anau", region:"Southland, New Zealand", lat:-45.4131, lng:167.7166, kind:"way", duration:"30 min", tags:["Break time","Coffee","Tea","Brunch","Free time","Scenic views on the way"]},
+      {name:"Eglinton Valley", region:"Fiordland, New Zealand", lat:-45.1667, lng:167.9333, kind:"way", duration:"10 min", tags:["Break time","Photo stop","Sightseeing","Scenic drive","Scenic views on the way"]},
+      {name:"Mirror Lakes", region:"Fiordland, New Zealand", lat:-44.9761, lng:168.0075, kind:"way", duration:"30 min", tags:["Photo stop","Sightseeing","Walk","Self-guided tour","Scenic views on the way"]},
+      {name:"Lake Gunn, Fiordland National Park", region:"Fiordland, New Zealand", lat:-44.8144, lng:168.0206, kind:"way", duration:"15 min", tags:["Break time","Photo stop","Visit","Sightseeing","Scenic views on the way"]},
+      {name:"Hollyford River", region:"Fiordland, New Zealand", lat:-44.7692, lng:168.0206, kind:"way", duration:"5 min", tags:["Photo stop","Free time","Sightseeing","Scenic views on the way","Wildlife viewing"]},
+      {name:"Homer Tunnel", region:"Fiordland, New Zealand", lat:-44.7647, lng:167.9214, kind:"way", duration:null, tags:["Sightseeing","Pass by","Scenic drive","Scenic views on the way"]},
+      {name:"Milford Sound", region:"Fiordland, New Zealand", lat:-44.6710, lng:167.9270, kind:"signature", duration:"105 min", tags:["Photo stop","Coffee","Tea","Boat cruise","Sightseeing","Dolphin watching","Pass by","Marine life viewing","Scenic views on the way"]},
+      {name:"Queenstown", region:"Otago, New Zealand", lat:-45.0312, lng:168.6626, kind:"anchor", duration:null, tags:["End of day"]}
+    ]
+  },
+  {
+    id: "d3",
+    date: "2026-11-20",
+    title: "Glenorchy Day Trip",
+    subtitle: "Queenstown → Glenorchy → Paradise loop",
+    notes: "",
+    stops: [
+      {name:"Queenstown", region:"Otago, New Zealand", lat:-45.0312, lng:168.6626, kind:"anchor", duration:null, tags:["Start of day"]},
+      {name:"Bob's Cove", region:"Otago, New Zealand", lat:-45.0700, lng:168.5089, kind:"way", duration:null, tags:[]},
+      {name:"Bennett's Bluff Lookout", region:"Otago, New Zealand", lat:-44.9600, lng:168.4600, kind:"way", duration:null, tags:[]},
+      {name:"Paradise Wharf", region:"Otago, New Zealand", lat:-44.7243, lng:168.3654, kind:"way", duration:null, tags:[]},
+      {name:"Twenty Five Mile Stream", region:"Otago, New Zealand", lat:-44.9000, lng:168.4200, kind:"way", duration:null, tags:[]},
+      {name:"Lake Face Creek Boat Ramp", region:"Otago, New Zealand", lat:-44.8600, lng:168.4000, kind:"way", duration:null, tags:[]},
+      {name:"Glenorchy", region:"Otago, New Zealand", lat:-44.8503, lng:168.3883, kind:"way", duration:null, tags:["Arrive Glenorchy"]},
+      {name:"Glenorchy-Scenic Road", region:"Glenorchy-Paradise Road, Otago 9372, New Zealand", lat:-44.7900, lng:168.3770, kind:"way", duration:null, tags:["Horse riding 2:30pm"]},
+      {name:"Queenstown", region:"Otago, New Zealand", lat:-45.0312, lng:168.6626, kind:"anchor", duration:null, tags:["End of day"]}
+    ]
+  }
+];
+
 let days = [];
 let activeDayId = null;
 let map, routeLine, glowLine, baseLayers = {};
 const markers = [];
 let mainRouteToken = 0;
+let notesSaveTimer = null;
 
 const DAY_COLORS = ["#7fd3e8","#e0b168","#e07070","#9fd67f","#c79fe8","#e89fc7","#f2c14e"];
 const colorForDay = idx => DAY_COLORS[idx % DAY_COLORS.length];
@@ -460,12 +527,25 @@ function load(){
       if(parsed.days && parsed.days.length){
         days = parsed.days;
         activeDayId = parsed.activeDayId || days[0].id;
+        mergeExtraDays();
         return;
       }
     }
   }catch(e){}
   days = JSON.parse(JSON.stringify(DEFAULT_DAYS));
   activeDayId = days[0].id;
+  mergeExtraDays();
+}
+function mergeExtraDays(){
+  let changed = false;
+  EXTRA_DAYS.forEach(extra => {
+    if(!days.some(d => d.id === extra.id)){
+      days.push(JSON.parse(JSON.stringify(extra)));
+      changed = true;
+    }
+  });
+  days.forEach(d => { if(d.notes === undefined) d.notes = ""; });
+  if(changed) save();
 }
 function save(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({days, activeDayId}));
@@ -546,6 +626,7 @@ function renderAll(){
   renderMapMarkers(day);
   renderRail(day);
   renderList(day);
+  renderNotes(day);
   if(day.stops.length){
     selectStop(0);
   }else{
@@ -745,6 +826,34 @@ function selectStop(i){
     map.panTo([s.lat, s.lng]);
     if(markers[i]) markers[i].openPopup();
   }
+}
+
+/* ---------- notes ---------- */
+function renderNotes(day){
+  const box = document.getElementById("notesBox");
+  box.value = day.notes || "";
+  box.oninput = () => {
+    day.notes = box.value;
+    renderNoteLinks(day.notes);
+    document.getElementById("notesSaved").textContent = "Saving…";
+    clearTimeout(notesSaveTimer);
+    notesSaveTimer = setTimeout(() => {
+      save();
+      document.getElementById("notesSaved").textContent = "Saved";
+      setTimeout(() => { document.getElementById("notesSaved").textContent = ""; }, 1500);
+    }, 500);
+  };
+  renderNoteLinks(day.notes || "");
+}
+function renderNoteLinks(text){
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const matches = text.match(urlRegex) || [];
+  const el = document.getElementById("notesLinks");
+  el.innerHTML = matches.map(u => {
+    let label = u;
+    try{ label = new URL(u).hostname.replace("www.",""); }catch(e){}
+    return `<a href="${u}" target="_blank" rel="noopener">🔗 ${label}</a>`;
+  }).join("");
 }
 
 /* ---------- day management ---------- */
